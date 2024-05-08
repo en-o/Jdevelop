@@ -25,12 +25,12 @@ public class ExceptionConfig {
      * 是否设置 HttpServletResponse.status且跟自定义的code同步
      *  默认 false 不设置
      */
-    private Boolean HttpServletResponseStatus;
+    private Boolean httpServletResponseStatus;
 
     /**
      * 设置 content-type 默认 application/json;charset=UTF-8
      */
-    private String HttpServletResponseHeaderContentType;
+    private String httpServletResponseHeaderContentType;
 
 
     public ExceptionConfig() {
@@ -38,16 +38,16 @@ public class ExceptionConfig {
 
     public ExceptionConfig(Boolean logInput, Boolean httpServletResponseStatus, String httpServletResponseHeaderContentType) {
         this.logInput = logInput;
-        HttpServletResponseStatus = httpServletResponseStatus;
-        HttpServletResponseHeaderContentType = httpServletResponseHeaderContentType;
+        this.httpServletResponseStatus = httpServletResponseStatus;
+        this.httpServletResponseHeaderContentType = httpServletResponseHeaderContentType;
     }
 
     @Override
     public String toString() {
         return "ExceptionConfig{" +
                 "logInput=" + logInput +
-                ", HttpServletResponseStatus=" + HttpServletResponseStatus +
-                ", HttpServletResponseHeaderContentType='" + HttpServletResponseHeaderContentType + '\'' +
+                ", HttpServletResponseStatus=" + httpServletResponseStatus +
+                ", HttpServletResponseHeaderContentType='" + httpServletResponseHeaderContentType + '\'' +
                 '}';
     }
 
@@ -63,21 +63,21 @@ public class ExceptionConfig {
     }
 
     public Boolean getHttpServletResponseStatus() {
-        if(null==HttpServletResponseStatus){
+        if(null== httpServletResponseStatus){
             return false;
         }
-        return HttpServletResponseStatus;
+        return httpServletResponseStatus;
     }
 
     public void setHttpServletResponseStatus(Boolean httpServletResponseStatus) {
-        HttpServletResponseStatus = httpServletResponseStatus;
+        this.httpServletResponseStatus = httpServletResponseStatus;
     }
 
     public String getHttpServletResponseHeaderContentType() {
-        return HttpServletResponseHeaderContentType;
+        return httpServletResponseHeaderContentType;
     }
 
     public void setHttpServletResponseHeaderContentType(String httpServletResponseHeaderContentType) {
-        HttpServletResponseHeaderContentType = httpServletResponseHeaderContentType;
+        this.httpServletResponseHeaderContentType = httpServletResponseHeaderContentType;
     }
 }

@@ -58,7 +58,11 @@ public @interface JpaSelectOperator {
 
     /**
      * 自定义查询用的字段名
-     * 空时默认使用属性字段
+     * <pr>
+     *     1. 空时默认使用属性字段
+     *     2. 如果是级联请用，级联对象名加其属性名组合（e.g 有个级联对象 Address address , 这里就用address.no根据其no查询）
+     * </pr>
+     *
      */
     String fieldName() default "";
 

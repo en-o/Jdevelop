@@ -38,7 +38,7 @@
 
     <!-- 统一依赖版本管理 -->
     <properties>
-        <revision>2.0.7</revision>
+        <revision>2.0.8-SNAPSHOT</revision>
         <!-- 文档  -->
         <knife4j.version>4.3.0</knife4j.version>
         <swagger.version>2.2.8</swagger.version>

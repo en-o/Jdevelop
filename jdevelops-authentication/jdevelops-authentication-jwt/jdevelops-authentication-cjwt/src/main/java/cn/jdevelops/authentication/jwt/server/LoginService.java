@@ -1,5 +1,6 @@
 package cn.jdevelops.authentication.jwt.server;
 
+import cn.jdevelops.authentication.jwt.vo.TokenSign;
 import cn.jdevelops.util.jwt.entity.SignEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ public interface LoginService  {
      * @param subject 用户唯一凭证(一般是登录名
      * @return 签名
      */
-    <T,S extends SignEntity<T>>  String login(S subject);
+    <T,S extends SignEntity<T>> TokenSign login(S subject);
 
     /**
      * 是否登录

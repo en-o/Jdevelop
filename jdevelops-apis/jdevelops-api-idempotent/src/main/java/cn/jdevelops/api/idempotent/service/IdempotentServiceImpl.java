@@ -79,6 +79,7 @@ public class IdempotentServiceImpl implements IdempotentService {
             }
         }
         String requestUri = request.getRequestURI();
+        // 存在token就用token做文件名，不存在就用IP
         String idempotentRedisFolder = getRedisFolder(request, idempotentConfig.getGroupStr(), requestUri);
         String redisValue = (String) redisTemplate.boundHashOps(idempotentRedisFolder).get(requestUri);
         // 值相等则进行保存

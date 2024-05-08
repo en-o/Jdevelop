@@ -2,13 +2,14 @@ package cn.jdevelops.authentication.jwt.interceptor;
 
 import cn.jdevelops.api.result.custom.ExceptionResultWrap;
 import cn.jdevelops.api.result.emums.TokenExceptionCode;
-import cn.jdevelops.authentication.jwt.exception.PermissionsException;
-import cn.jdevelops.authentication.jwt.server.CheckTokenInterceptor;
-import cn.jdevelops.authentication.jwt.util.JwtWebUtil;
-import cn.jdevelops.authentication.jwt.vo.CheckToken;
 import cn.jdevelops.authentication.jwt.annotation.ApiMapping;
 import cn.jdevelops.authentication.jwt.annotation.ApiPlatform;
 import cn.jdevelops.authentication.jwt.annotation.NotRefreshToken;
+import cn.jdevelops.authentication.jwt.exception.PermissionsException;
+import cn.jdevelops.authentication.jwt.server.CheckTokenInterceptor;
+import cn.jdevelops.authentication.jwt.util.CookieUtil;
+import cn.jdevelops.authentication.jwt.util.JwtWebUtil;
+import cn.jdevelops.authentication.jwt.vo.CheckToken;
 import cn.jdevelops.spi.ExtensionLoader;
 import cn.jdevelops.util.jwt.config.JwtConfig;
 import cn.jdevelops.util.jwt.constant.JwtConstant;
@@ -20,9 +21,13 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -50,10 +55,20 @@ public class WebApiInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) throws Exception {
+
+        if (handler instanceof ResourceHttpRequestHandler && jwtConfig.getOss().isEnable()) {
+            ResourceHttpRequestHandler resourceHandler = (ResourceHttpRequestHandler) handler;
+            String servletPath = request.getServletPath();
+            log.debug("====> servlet path {}, resourceHandler str {}", servletPath, resourceHandler);
+            Integer status = checkOssToken(resourceHandler, servletPath, request, response);
+            if (status != null) {
+                return status == 1;
+            }
+        }
+        // 放行 非HandlerMethod 请求
         if (!(handler instanceof HandlerMethod)) {
             return true;
         }
-
 
         HandlerMethod handlerMethod = (HandlerMethod) handler;
         // 获取处理器方法所属的类
@@ -64,12 +79,12 @@ public class WebApiInterceptor implements HandlerInterceptor {
         if (method.isAnnotationPresent(ApiMapping.class)) {
             ApiMapping annotation = method.getAnnotation(ApiMapping.class);
             if (annotation.checkToken()) {
-                return check_refresh_token(request, response, handler, method, logger, controllerClass);
+                return check_refresh_token(request, response,  method, logger, controllerClass);
             } else {
                 return true;
             }
         } else {
-            return check_refresh_token(request, response, handler, method, logger, controllerClass);
+            return check_refresh_token(request, response,  method, logger, controllerClass);
         }
     }
 
@@ -79,7 +94,6 @@ public class WebApiInterceptor implements HandlerInterceptor {
      *
      * @param request         request
      * @param response        response
-     * @param handler         handler
      * @param method          method
      * @param logger          logger
      * @param controllerClass 处理器方法所属的类
@@ -88,10 +102,10 @@ public class WebApiInterceptor implements HandlerInterceptor {
      */
     private boolean check_refresh_token(HttpServletRequest request,
                                         HttpServletResponse response,
-                                        Object handler, Method method,
+                                        Method method,
                                         Logger logger,
                                         Class<?> controllerClass) throws Exception {
-        CheckToken check = check(request, response, handler, logger, method, controllerClass);
+        CheckToken check = check(request, response,  logger, method, controllerClass);
         if (Boolean.TRUE.equals(check.getCheck())) {
             refreshToken(check.getToken(), method);
         }
@@ -104,7 +118,6 @@ public class WebApiInterceptor implements HandlerInterceptor {
      *
      * @param request  request
      * @param response response
-     * @param handler  handler
      * @param logger   logger
      * @param controllerClass 处理器方法所属的类
      * @return check
@@ -112,7 +125,6 @@ public class WebApiInterceptor implements HandlerInterceptor {
      */
     private CheckToken check(HttpServletRequest request,
                              HttpServletResponse response,
-                             Object handler,
                              Logger logger,
                              Method method,
                              Class<?> controllerClass) throws Exception {
@@ -121,9 +133,7 @@ public class WebApiInterceptor implements HandlerInterceptor {
         boolean flag = checkTokenInterceptor.checkToken(token);
         logger.info("需要验证token,url:{}, 校验结果：{},token:{}", request.getRequestURI(), flag, token);
         if (!flag) {
-            response.setHeader("content-type", "application/json;charset=UTF-8");
-            response.getOutputStream().write(JSON.toJSONString(ExceptionResultWrap
-                    .result(TokenExceptionCode.TOKEN_ERROR.getCode(), TokenExceptionCode.TOKEN_ERROR.getMessage())).getBytes(StandardCharsets.UTF_8));
+            extractedErrorResponse(response);
             return new CheckToken(false, token);
         }
         /* 日志用的 - %X{token} */
@@ -251,5 +261,63 @@ public class WebApiInterceptor implements HandlerInterceptor {
     private void getCheckTokenInterceptor() {
         checkTokenInterceptor = ExtensionLoader.getExtensionLoader(CheckTokenInterceptor.class).getJoin("defaultInterceptor");
     }
+
+
+    /**
+     * 检查 local oss 文件访问的权限
+     *
+     * @return 1: 放行, 0 拦截, null 不做处理
+     */
+    private Integer checkOssToken(ResourceHttpRequestHandler resourceHandler
+            , String servletPath
+            , HttpServletRequest request
+            ,HttpServletResponse response) {
+
+        try {
+            ApplicationContext applicationContext = resourceHandler
+                    .getApplicationContext();
+            if (applicationContext == null) {
+                return null;
+            }
+            Environment environment = applicationContext.getEnvironment();
+            String localOssResourceUpDir = environment.getProperty("detabes.oss.local.upload-dir", "");
+
+            String localOssResourceContextPath = environment.getProperty("detabes.oss.local.context-path", "");
+
+            // local oss
+            if (servletPath.startsWith(localOssResourceContextPath)) {
+                if (resourceHandler.toString().equals("ResourceHttpRequestHandler [URL [file:" + localOssResourceUpDir + "/]]")) {
+                    Cookie cookie = CookieUtil.findCookie(
+                            jwtConfig.getOss().getOssLocalJwtKey(), request.getCookies()
+                    ).orElse(null);
+                    if (cookie == null) {
+                        extractedErrorResponse(response);
+                        return 0;
+                    } else {
+                        if(checkTokenInterceptor.checkToken(cookie.getValue())){
+                            return 1;
+                        }else {
+                            extractedErrorResponse(response);
+                            return 0;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("  ===> checkOssToken error {}", e.getMessage());
+        }
+        return null;
+    }
+
+
+    /**
+     *  给 response 添加错误信息
+     */
+    private static void extractedErrorResponse(HttpServletResponse response) throws IOException {
+        response.setHeader("content-type", "application/json;charset=UTF-8");
+        response.getOutputStream().write(JSON.toJSONString(ExceptionResultWrap
+                .result(TokenExceptionCode.TOKEN_ERROR.getCode(), TokenExceptionCode.TOKEN_ERROR.getMessage())).getBytes(StandardCharsets.UTF_8));
+    }
+
 
 }

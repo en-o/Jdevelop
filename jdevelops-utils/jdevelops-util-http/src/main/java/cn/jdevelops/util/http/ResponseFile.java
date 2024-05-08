@@ -121,7 +121,7 @@ public class ResponseFile {
         response.setCharacterEncoding("utf-8");
         // 这里URLEncoder.encode可以防止中文乱码
         String fileName = URLEncoder.encode(filename, "UTF-8").replaceAll("\\+", "%20");
-        response.setHeader("Content-disposition", "attachment;filename*=" + fileName);
+        response.setHeader("Content-disposition", "attachment;filename=" + fileName);
         return response;
     }
 }

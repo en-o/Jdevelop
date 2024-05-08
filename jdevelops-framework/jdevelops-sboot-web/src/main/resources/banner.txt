@@ -7,7 +7,7 @@ ${AnsiColor.BRIGHT_RED}[ \_| | '.__.;__]'.__.'  \__/   '.__.'[___]'.__.'  | ;.__
 ${AnsiColor.BRIGHT_RED} \____/                                           [__|
 
 Spring Boot 版本：${spring-boot.version}
-jdevelops   版本：2.0.7
+jdevelops   版本：2.0.8-SNAPSHOT
 项目名称 ：${spring.application.name}
 项目端口 ：${server.port}
 项目PID ：${pid}

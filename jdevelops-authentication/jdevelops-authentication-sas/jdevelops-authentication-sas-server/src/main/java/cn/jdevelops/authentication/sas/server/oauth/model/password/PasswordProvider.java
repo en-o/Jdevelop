@@ -211,17 +211,26 @@ public class PasswordProvider implements AuthenticationProvider {
             logger.trace("Saved authorization");
         }
 
+       //   this  additionalParameters for unmodifiableMap, so new HashMap replace it
+        Map<String, Object> resulMap = new HashMap<>();
         if (idToken != null) {
-            additionalParameters = new HashMap<>();
-            additionalParameters.put(OidcParameterNames.ID_TOKEN, idToken.getTokenValue());
+            resulMap.put(OidcParameterNames.ID_TOKEN, idToken.getTokenValue());
         }
 
         if (logger.isTraceEnabled()) {
             logger.trace("Authenticated token request");
         }
 
+        try {
+            // todo password login add/remove result params
+            // ps this  unmodifiableMap
+            resulMap.putAll(additionalParameters);
+            resulMap.remove("password");
+        }catch (Exception e){
+           logger.warn("删除additionalParameters.password参数是吧.", e);
+        }
         return new OAuth2AccessTokenAuthenticationToken(
-                registeredClient, clientPrincipal, accessToken, refreshToken, additionalParameters);
+                registeredClient, clientPrincipal, accessToken, refreshToken, resulMap);
     }
 
     @Override

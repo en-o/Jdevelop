@@ -1,10 +1,11 @@
 package cn.jdevelops.authentication.jredis.service.impl;
 
 import cn.jdevelops.authentication.jredis.constant.RedisJwtKey;
+import cn.jdevelops.authentication.jredis.entity.StorageUserState;
 import cn.jdevelops.authentication.jredis.service.RedisUserState;
 import cn.jdevelops.authentication.jredis.util.RedisUtil;
-import cn.jdevelops.authentication.jredis.entity.StorageUserState;
 import cn.jdevelops.authentication.jwt.exception.DisabledAccountException;
+import cn.jdevelops.util.jwt.config.JwtConfig;
 import cn.jdevelops.util.jwt.constant.JwtMessageConstant;
 import cn.jdevelops.util.jwt.core.JwtService;
 import cn.jdevelops.util.jwt.exception.LoginException;
@@ -35,6 +36,8 @@ public class RedisUserStateImpl implements RedisUserState {
 
     private static final Logger LOG = LoggerFactory.getLogger(RedisUserStateImpl.class);
 
+    @Resource
+    private JwtConfig jwtConfig;
     /**
      * reids
      */
@@ -44,7 +47,8 @@ public class RedisUserStateImpl implements RedisUserState {
 
     @Override
     public void storage(StorageUserState state) {
-        String userStateRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_STATUS_FOLDER, state.getSubject());
+        String userStateRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                ,RedisJwtKey.REDIS_USER_STATUS_FOLDER, state.getSubject());
         // 处理由于是泛型对象导致其他地方继承后有问题，
         String accountJson = JSON.toJSONString(state);
         redisTemplate.boundHashOps(userStateRedisFolder).put(state.getSubject(), accountJson);
@@ -59,7 +63,8 @@ public class RedisUserStateImpl implements RedisUserState {
 
     @Override
     public StorageUserState load(String subject) {
-        String userStateRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_STATUS_FOLDER, subject);
+        String userStateRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                ,RedisJwtKey.REDIS_USER_STATUS_FOLDER, subject);
         String redisUser;
         try {
             redisUser = (String) redisTemplate
@@ -98,7 +103,8 @@ public class RedisUserStateImpl implements RedisUserState {
     @Override
     public void remove(String subject) {
         try {
-            String userStateRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_STATUS_FOLDER, subject);
+            String userStateRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                    ,RedisJwtKey.REDIS_USER_STATUS_FOLDER, subject);
             redisTemplate.delete(userStateRedisFolder);
         }catch (Exception e){
             LOG.error("删除"+subject+"userState失败", e);
@@ -117,7 +123,8 @@ public class RedisUserStateImpl implements RedisUserState {
         try {
             Set<String> keys = new HashSet<>();
             for (String key : subject) {
-                String userStateRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_STATUS_FOLDER, key);
+                String userStateRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                        ,RedisJwtKey.REDIS_USER_STATUS_FOLDER, key);
                 keys.add(userStateRedisFolder);
             }
             if(!keys.isEmpty()){

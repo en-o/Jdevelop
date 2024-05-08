@@ -15,6 +15,11 @@ public class BusinessException extends RuntimeException {
 
     private int code;
 
+    /**
+     * 是否修改 http请求的status， 默认false以全局为主, true=code
+     */
+    private Boolean  httpServletResponseStatus;
+
     public BusinessException() {
     }
 
@@ -49,8 +54,28 @@ public class BusinessException extends RuntimeException {
 
 
 
+
     public int getCode() {
         return this.code;
+    }
+
+
+    public Boolean getHttpServletResponseStatus() {
+        if(httpServletResponseStatus == null){
+            return false;
+        }else {
+            return httpServletResponseStatus;
+        }
+    }
+
+    /**
+     * 否修改 http请求的status，
+     * @param httpServletResponseStatus 默认false以全局为主, true=code
+     * @return BusinessException
+     */
+    public BusinessException setHttpServletResponseStatus(Boolean httpServletResponseStatus) {
+        this.httpServletResponseStatus = httpServletResponseStatus;
+        return this;
     }
 
     public String getErrorMessage() {

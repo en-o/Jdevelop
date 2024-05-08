@@ -6,6 +6,8 @@ import cn.jdevelops.authentication.jredis.entity.sign.RedisSignEntity;
 import cn.jdevelops.authentication.jwt.exception.ExpiredRedisException;
 import cn.jdevelops.authentication.jwt.server.LoginService;
 import cn.jdevelops.authentication.jwt.util.JwtWebUtil;
+import cn.jdevelops.authentication.jwt.vo.TokenSign;
+import cn.jdevelops.util.jwt.constant.SignState;
 import cn.jdevelops.util.jwt.core.JwtService;
 import cn.jdevelops.util.jwt.entity.SignEntity;
 import cn.jdevelops.util.jwt.exception.LoginException;
@@ -44,7 +46,7 @@ public class RedisLoginService implements LoginService {
      * @param  loginMeta 登录需要的元数据
      * @return 签名
      */
-    public <T> String login(RedisSignEntity<T> loginMeta) {
+    public <T> TokenSign login(RedisSignEntity<T> loginMeta) {
 
         // 判断是否需要重复登录
         try {
@@ -54,7 +56,7 @@ public class RedisLoginService implements LoginService {
             if (Boolean.FALSE.equals(loginMeta.getOnlyOnline())) {
                 // 继续使用当前token
                 logger.warn("开始登录 - 登录判断 - 当前用户在线 - 继续使用当前token");
-                return loginUser.getToken();
+                return  new TokenSign(loginUser.getToken(), SignState.renewal);
             }
             // 重新登录
         } catch (ExpiredRedisException | TokenException e) {
@@ -87,7 +89,7 @@ public class RedisLoginService implements LoginService {
                 redisUserRole.storage(loginMeta.getUserRole());
             }
             // 返回token
-            return sign;
+            return new TokenSign(sign);
         } catch (JoseException e) {
             throw new LoginException("登录异常，请重新登录", e);
         }
@@ -95,7 +97,7 @@ public class RedisLoginService implements LoginService {
 
 
     @Override
-    public <T, S extends SignEntity<T>> String login(S subject) {
+    public <T, S extends SignEntity<T>> TokenSign login(S subject) {
         RedisSignEntity<T> redisSign = new RedisSignEntity<>(subject);
         return login(redisSign);
     }

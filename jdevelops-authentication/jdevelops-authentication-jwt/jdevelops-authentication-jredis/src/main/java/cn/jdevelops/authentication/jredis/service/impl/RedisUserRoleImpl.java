@@ -7,6 +7,7 @@ import cn.jdevelops.authentication.jredis.util.RedisUtil;
 import cn.jdevelops.authentication.jredis.util.UserRoleUtil;
 import cn.jdevelops.authentication.jwt.annotation.ApiPermission;
 import cn.jdevelops.authentication.jwt.exception.PermissionsException;
+import cn.jdevelops.util.jwt.config.JwtConfig;
 import cn.jdevelops.util.jwt.constant.JwtMessageConstant;
 import cn.jdevelops.util.jwt.core.JwtService;
 import cn.jdevelops.util.jwt.exception.LoginException;
@@ -35,7 +36,8 @@ import static cn.jdevelops.api.result.emums.PermissionsExceptionCode.API_ROLE_AU
 public class RedisUserRoleImpl implements RedisUserRole {
 
     private static final Logger LOG = LoggerFactory.getLogger(RedisUserRoleImpl.class);
-
+    @Resource
+    private JwtConfig jwtConfig;
     /**
      * reids
      */
@@ -45,7 +47,8 @@ public class RedisUserRoleImpl implements RedisUserRole {
 
     @Override
     public void storage(StorageUserRole role) {
-        String userRoleRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_ROLE_FOLDER, role.getSubject());
+        String userRoleRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                ,RedisJwtKey.REDIS_USER_ROLE_FOLDER, role.getSubject());
         // 处理由于是泛型对象导致其他地方继承后有问题，
         String accountJson = JSON.toJSONString(role);
         redisTemplate.boundHashOps(userRoleRedisFolder).put(role.getSubject(), accountJson);
@@ -60,7 +63,8 @@ public class RedisUserRoleImpl implements RedisUserRole {
 
     @Override
     public StorageUserRole load(String subject) {
-        String userRoleRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_ROLE_FOLDER, subject);
+        String userRoleRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                ,RedisJwtKey.REDIS_USER_ROLE_FOLDER, subject);
         String redisRole;
         try {
             redisRole = (String) redisTemplate
@@ -105,7 +109,8 @@ public class RedisUserRoleImpl implements RedisUserRole {
     @Override
     public void remove(String subject) {
        try {
-           String userRoleRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_ROLE_FOLDER, subject);
+           String userRoleRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                   ,RedisJwtKey.REDIS_USER_ROLE_FOLDER, subject);
            redisTemplate.delete(userRoleRedisFolder);
        }catch (Exception e){
            LOG.error("删除"+subject+"userRole失败", e);
@@ -123,7 +128,8 @@ public class RedisUserRoleImpl implements RedisUserRole {
         try {
             Set<String> keys = new HashSet<>();
             for (String key : subject) {
-                String userRoleRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_ROLE_FOLDER, key);
+                String userRoleRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                        ,RedisJwtKey.REDIS_USER_ROLE_FOLDER, key);
                 keys.add(userRoleRedisFolder);
             }
             if (!keys.isEmpty()) {

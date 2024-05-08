@@ -2,8 +2,8 @@ package cn.jdevelops.authentication.jredis.service.impl;
 
 import cn.jdevelops.authentication.jredis.constant.RedisJwtKey;
 import cn.jdevelops.authentication.jredis.entity.only.StorageToken;
-import cn.jdevelops.authentication.jredis.util.RedisUtil;
 import cn.jdevelops.authentication.jredis.service.RedisToken;
+import cn.jdevelops.authentication.jredis.util.RedisUtil;
 import cn.jdevelops.authentication.jwt.exception.ExpiredRedisException;
 import cn.jdevelops.util.jwt.config.JwtConfig;
 import cn.jdevelops.util.jwt.core.JwtService;
@@ -28,7 +28,7 @@ import static cn.jdevelops.api.result.emums.TokenExceptionCode.REDIS_EXPIRED_USE
  * @date 2023/12/4 9:45
  */
 @ConditionalOnMissingBean(RedisToken.class)
-public class RedisTokenImpl implements RedisToken{
+public class RedisTokenImpl implements RedisToken {
 
 
     private static final Logger LOG = LoggerFactory.getLogger(RedisTokenImpl.class);
@@ -45,8 +45,9 @@ public class RedisTokenImpl implements RedisToken{
 
     @Override
     public void storage(StorageToken token) {
-        String loginRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_LOGIN_FOLDER,
-                token.getSubject());
+        String loginRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                , RedisJwtKey.REDIS_USER_LOGIN_FOLDER
+                , token.getSubject());
         redisTemplate.boundHashOps(loginRedisFolder).put(token.getSubject(),
                 token);
         if (Boolean.TRUE.equals(token.getAlwaysOnline())) {
@@ -60,7 +61,8 @@ public class RedisTokenImpl implements RedisToken{
 
     @Override
     public void refresh(String subject) {
-        String loginRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_LOGIN_FOLDER, subject);
+        String loginRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                ,RedisJwtKey.REDIS_USER_LOGIN_FOLDER, subject);
         Object loginRedis = redisTemplate.boundHashOps(loginRedisFolder).get(subject);
         if (Objects.isNull(loginRedis)) {
             LOG.warn("{}用户未登录，不需要刷新", subject);
@@ -83,12 +85,13 @@ public class RedisTokenImpl implements RedisToken{
 
     @Override
     public void remove(String subject) {
-       try {
-           String redisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_LOGIN_FOLDER, subject);
-           redisTemplate.delete(redisFolder);
-       }catch (Exception e){
-           LOG.error("删除"+subject+" <==> token失败", e);
-       }
+        try {
+            String redisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                    ,RedisJwtKey.REDIS_USER_LOGIN_FOLDER, subject);
+            redisTemplate.delete(redisFolder);
+        } catch (Exception e) {
+            LOG.error("删除" + subject + " <==> token失败", e);
+        }
     }
 
     @Override
@@ -99,18 +102,19 @@ public class RedisTokenImpl implements RedisToken{
 
     @Override
     public void remove(List<String> subject) {
-       try {
-           Set<String> keys = new HashSet<>();
-           for (String key : subject) {
-               String redisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_LOGIN_FOLDER, key);
-               keys.add(redisFolder);
-           }
-           if(!keys.isEmpty()){
-               redisTemplate.delete(keys);
-           }
-       }catch (Exception e){
-           LOG.error("删除tokens失败", e);
-       }
+        try {
+            Set<String> keys = new HashSet<>();
+            for (String key : subject) {
+                String redisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                        ,RedisJwtKey.REDIS_USER_LOGIN_FOLDER, key);
+                keys.add(redisFolder);
+            }
+            if (!keys.isEmpty()) {
+                redisTemplate.delete(keys);
+            }
+        } catch (Exception e) {
+            LOG.error("删除tokens失败", e);
+        }
     }
 
     @Override
@@ -123,7 +127,8 @@ public class RedisTokenImpl implements RedisToken{
 
     @Override
     public StorageToken load(String subject) {
-        String loginRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_LOGIN_FOLDER, subject);
+        String loginRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                ,RedisJwtKey.REDIS_USER_LOGIN_FOLDER, subject);
         Object loginRedis = redisTemplate.boundHashOps(loginRedisFolder).get(subject);
         if (Objects.isNull(loginRedis)) {
             throw new ExpiredRedisException(REDIS_EXPIRED_USER);
@@ -140,7 +145,8 @@ public class RedisTokenImpl implements RedisToken{
 
     @Override
     public StorageToken verify(String subject) {
-        String loginRedisFolder = RedisUtil.getRedisFolder(RedisJwtKey.REDIS_USER_LOGIN_FOLDER, subject);
+        String loginRedisFolder = RedisUtil.getRedisFolder(jwtConfig.getPrefix()
+                ,RedisJwtKey.REDIS_USER_LOGIN_FOLDER, subject);
         StorageToken tokenRedis;
         Object loginRedis = redisTemplate.boundHashOps(loginRedisFolder).get(subject);
         if (Objects.isNull(loginRedis)) {

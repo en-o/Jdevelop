@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import javax.annotation.Resource;
 
@@ -21,6 +22,7 @@ import static cn.jdevelops.sboot.swagger.core.util.SwaggerUtil.getRealIp;
  * @version 1
  * @date 2023-03-12 18:54:25
  */
+@ConditionalOnProperty(name = "jdevelops.swagger.console.enabled", havingValue = "true", matchIfMissing = true)
 public class ConsoleConfig implements ApplicationRunner {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ConsoleConfig.class);

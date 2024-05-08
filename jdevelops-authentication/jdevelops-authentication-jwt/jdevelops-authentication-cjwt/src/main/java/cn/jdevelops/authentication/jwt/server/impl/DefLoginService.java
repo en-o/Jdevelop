@@ -2,6 +2,7 @@ package cn.jdevelops.authentication.jwt.server.impl;
 
 import cn.jdevelops.authentication.jwt.server.LoginService;
 import cn.jdevelops.authentication.jwt.util.JwtWebUtil;
+import cn.jdevelops.authentication.jwt.vo.TokenSign;
 import cn.jdevelops.util.jwt.core.JwtService;
 import cn.jdevelops.util.jwt.entity.SignEntity;
 import cn.jdevelops.util.jwt.exception.LoginException;
@@ -14,18 +15,19 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * 登录工具
+ *
  * @author tan
  */
 @ConditionalOnMissingBean(LoginService.class)
 public class DefLoginService implements LoginService {
 
-      Logger logger = LoggerFactory.getLogger(DefLoginService.class);
+    Logger logger = LoggerFactory.getLogger(DefLoginService.class);
 
 
     @Override
-    public <T, S extends SignEntity<T>> String login(S subject) {
+    public <T, S extends SignEntity<T>> TokenSign login(S subject) {
         try {
-            return JwtService.generateToken(subject);
+            return new TokenSign(JwtService.generateToken(subject));
         } catch (JoseException e) {
             throw new LoginException("登录异常，请重新登录", e);
         }

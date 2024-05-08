@@ -149,6 +149,7 @@ public class JwtService {
             validateTokenByJwtClaims(token);
             return true;
         } catch (Exception e) {
+            logger.error("验证token ===》",e);
             return false;
         }
     }

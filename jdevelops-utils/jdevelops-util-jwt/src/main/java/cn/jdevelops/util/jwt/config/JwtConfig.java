@@ -2,6 +2,7 @@ package cn.jdevelops.util.jwt.config;
 
 import cn.jdevelops.util.jwt.constant.JwtConstant;
 import cn.jdevelops.util.jwt.entity.JCookie;
+import cn.jdevelops.util.jwt.entity.OssLocalAuthentication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.stereotype.Component;
@@ -73,6 +74,18 @@ public class JwtConfig {
      */
     private Boolean verifyPlatform;
 
+
+    /**
+     * 本地文件上次，文件访问接口鉴权
+     */
+    @NestedConfigurationProperty
+    private OssLocalAuthentication oss;
+
+
+    /**
+     * 登录相关的jwt存储前缀，区分不同项目 prefix:RedisJwtKey.class:xx:xx
+     */
+    private String prefix;
 
     public String getTokenSecret() {
         if(Objects.isNull(tokenSecret)||tokenSecret.length()<=0){
@@ -178,6 +191,26 @@ public class JwtConfig {
         this.verifyPlatform = verifyPlatform;
     }
 
+    public OssLocalAuthentication getOss() {
+        if(null == oss){
+            return new OssLocalAuthentication();
+        }
+        return oss;
+    }
+
+    public void setOss(OssLocalAuthentication oss) {
+        this.oss = oss;
+    }
+
+
+    public String getPrefix() {
+        return prefix==null ? "project" : prefix;
+    }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
     @Override
     public String toString() {
         return "JwtConfig{" +
@@ -190,6 +223,8 @@ public class JwtConfig {
                 ", callRefreshToken=" + callRefreshToken +
                 ", verifyPermission=" + verifyPermission +
                 ", verifyPlatform=" + verifyPlatform +
+                ", oss=" + oss +
+                ", prefix='" + prefix + '\'' +
                 '}';
     }
 }

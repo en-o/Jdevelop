@@ -67,6 +67,9 @@ public class UserException {
      */
     public static final ExceptionCode DISABLED_ACCOUNT = new ExceptionCode(412, "账户已停用");
 
-
+    /**
+     * 频繁登录请稍后再试
+     */
+    public static final ExceptionCode LOGIN_LIMIT = new ExceptionCode(403, "频繁登录请稍后再试");
 
 }

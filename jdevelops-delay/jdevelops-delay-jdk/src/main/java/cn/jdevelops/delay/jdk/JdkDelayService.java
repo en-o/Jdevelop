@@ -60,6 +60,17 @@ public class JdkDelayService implements DelayService<DelayTask> {
     }
 
     @Override
+    public void cancel(String delayMessage) {
+        logger.warn("===> jdk delay 暂不支持取消操作");
+    }
+
+    @Override
+    public void cancel(DelayTask delayMessage) {
+        logger.warn("===> jdk delay 暂不支持取消操作");
+    }
+
+
+    @Override
     public void consumeDelay() {
         // IllegalArgumentException 的话 initialDelay = 1， period = 1 直接写死
         long initialDelay =Math.round(Math.random()*10+10);
